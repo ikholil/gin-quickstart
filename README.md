@@ -75,6 +75,14 @@ These credentials and records are for local development only. The seed command r
 
 The local `.env` created in this workspace also provisions `admin@example.com` with password `local-dev-admin-password`. This is an insecure development-only credential; replace it for any non-local environment.
 
+## Postman
+
+Import [`postman/ecommerce-api.postman_collection.json`](./postman/ecommerce-api.postman_collection.json) into Postman. Start the local API and run `make seed`. In the collection's **Variables** tab, set `adminEmail` and `adminPassword` to the matching values from `.env`; the customer variables default to the seeded Alex account. Change `baseUrl` if the API is not listening at `http://localhost:8080`.
+
+All request URLs use the `baseUrl` collection variable directly (for example, `{{baseUrl}}/api/v1/products`) so Postman can resolve the host immediately after import without relying on nested variables.
+
+Run the collection with the Collection Runner in order. Login requests save `customerToken` and `adminToken`; create requests save resource IDs for subsequent calls. The register request creates a fresh uniquely named test customer each time. The admin catalog requests create a new Postman category and products when run, so reruns add more demo catalog entries. Checkout creates a pending order; the final admin request cancels it and restores inventory. Seed data again with `make seed` to reset seeded product stock.
+
 ## API
 
 Business routes use the `/api/v1` prefix. Liveness and readiness probes are `/healthz` and `/readyz`.
