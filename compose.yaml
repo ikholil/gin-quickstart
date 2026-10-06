@@ -1,0 +1,39 @@
+services:
+  api:
+    build:
+      context: .
+    env_file:
+      - .env
+    environment:
+      PORT: "${PORT:-8080}"
+      DB_PATH: /data/ecommerce.db
+    ports:
+      - "${PORT:-8080}:${PORT:-8080}"
+    volumes:
+      - ecommerce-data:/data
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - wget -q -O /dev/null "http://127.0.0.1:$${PORT}/readyz" || exit 1
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+  seed:
+    profiles:
+      - tools
+    build:
+      context: .
+    env_file:
+      - .env
+    environment:
+      DB_PATH: /data/ecommerce.db
+    entrypoint:
+      - /usr/local/bin/ecommerce-seed
+    volumes:
+      - ecommerce-data:/data
+
+volumes:
+  ecommerce-data:

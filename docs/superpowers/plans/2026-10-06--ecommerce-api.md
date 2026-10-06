@@ -42,6 +42,7 @@ Implement the approved design in the existing `gin-quickstart` module. Keep the 
 
 - Replace the starter `/ping` endpoint with the complete route set while preserving standard Gin startup behavior.
 - Add a concise README section for configuration, local run/migration behavior, route groups, and test commands; add a `.gitignore` entry for the local SQLite database if needed.
+- Add optional dotenv loading, Docker/Compose/Makefile local workflows, and an explicit `APP_ENV=development`-guarded idempotent sample-data seeder.
 - Run formatting, focused tests as each layer lands, then `go test ./...` and `go vet ./...`.
 - Manually smoke-test startup with a temporary database and explicit test JWT/admin configuration; verify liveness/readiness, registration/login, product/cart/checkout, and admin cancellation over HTTP.
 

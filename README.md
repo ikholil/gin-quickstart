@@ -4,17 +4,33 @@ A single-process Gin ecommerce API backed by a local SQLite database. Payment pr
 
 ## Run locally
 
-Use Go 1.27.1 or newer. Configure the required signing secret and start the server:
+Use Go 1.27.1 or newer. Create a local environment file from the template:
 
 ```sh
-export JWT_SECRET="$(openssl rand -hex 32)"
-go run .
+cp .env.example .env
 ```
+
+Set `JWT_SECRET` in `.env` to a random value with at least 32 bytes. For example, generate one with:
+
+```sh
+openssl rand -hex 32
+```
+
+Then start the server:
+
+```sh
+go run main.go
+# or
+make run
+```
+
+The app automatically reads `.env` from the current working directory. Existing environment variables override values in that file, so this works with shells and deployment platforms too. A missing `.env` is allowed if configuration is supplied by the environment. `.env` is local-only and ignored by Git.
 
 Configuration:
 
 | Variable | Required | Default | Notes |
 |---|---|---|---|
+| `APP_ENV` | No | `production` | Set to `development` in local `.env`; required by the development seeder |
 | `PORT` | No | `8080` | Listen port (1-65535) |
 | `DB_PATH` | No | `./data/ecommerce.db` | SQLite file path; parent directory is created |
 | `JWT_SECRET` | Yes | — | At least 32 bytes; HS256 signing key |
@@ -23,6 +39,41 @@ Configuration:
 | `ADMIN_PASSWORD` | No | — | At least 12 characters; never overwritten for an existing account |
 
 Migrations run automatically at startup. Startup fails on invalid configuration, database errors, or migration errors. If both admin variables are omitted, the API starts without creating an admin account.
+
+## Run with Docker Compose
+
+Compose requires a local `.env` file:
+
+```sh
+cp .env.example .env
+# Set JWT_SECRET and, optionally, both ADMIN_EMAIL and ADMIN_PASSWORD in .env.
+docker compose up --build
+```
+
+The SQLite database persists in the `ecommerce-data` named volume. The API runs as a non-root user and Compose checks `/readyz` for health. Use `docker compose down` to stop it, or `docker compose down -v` only when you intentionally want to delete the local database.
+
+## Seed local test data
+
+With `APP_ENV=development` configured in `.env`, run:
+
+```sh
+make seed
+```
+
+This idempotently creates three categories, twelve products with varied prices/stock, and two demo customers. It also provisions the configured initial admin if supplied. It refuses to run in `test` or `production`, and app startup never inserts sample records automatically.
+
+For the Compose named volume instead, use `make seed-compose`; it runs the same guarded seeder against the database used by the container.
+
+Demo customer accounts:
+
+| Email | Password |
+|---|---|
+| `alex@example.test` | `demo-alex-password` |
+| `sam@example.test` | `demo-sam-password` |
+
+These credentials and records are for local development only. The seed command resets stock and reactivates its own sample products each time it runs.
+
+The local `.env` created in this workspace also provisions `admin@example.com` with password `local-dev-admin-password`. This is an insecure development-only credential; replace it for any non-local environment.
 
 ## API
 
@@ -42,4 +93,6 @@ Customer registration passwords must contain 12 to 72 bytes. `POST /cart/items` 
 gofmt -w .
 go test ./...
 go vet ./...
+make build
+make seed
 ```

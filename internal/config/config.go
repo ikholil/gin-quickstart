@@ -6,9 +6,12 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/joho/godotenv"
 )
 
 type Config struct {
+	AppEnv        string
 	Port          int
 	DBPath        string
 	JWTSecret     []byte
@@ -18,6 +21,22 @@ type Config struct {
 }
 
 func Load() (Config, error) {
+	if _, err := os.Stat(".env"); err == nil {
+		if err := godotenv.Load(".env"); err != nil {
+			return Config{}, fmt.Errorf("load .env: %w", err)
+		}
+	} else if !os.IsNotExist(err) {
+		return Config{}, fmt.Errorf("check .env: %w", err)
+	}
+
+	appEnv := strings.TrimSpace(os.Getenv("APP_ENV"))
+	if appEnv == "" {
+		appEnv = "production"
+	}
+	if appEnv != "development" && appEnv != "test" && appEnv != "production" {
+		return Config{}, fmt.Errorf("APP_ENV must be development, test, or production")
+	}
+
 	port := 8080
 	if raw := strings.TrimSpace(os.Getenv("PORT")); raw != "" {
 		value, err := strconv.Atoi(raw)
@@ -59,6 +78,7 @@ func Load() (Config, error) {
 	}
 
 	return Config{
+		AppEnv:        appEnv,
 		Port:          port,
 		DBPath:        dbPath,
 		JWTSecret:     secret,
